@@ -23,12 +23,15 @@ export function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-20 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
+      <section className="bg-gradient-to-br from-blue-700 to-blue-900 text-white py-24 px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
+
+        <div className="container mx-auto max-w-4xl text-center relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Chia sẻ tri thức, Cùng nhau phát triển
           </h1>
-          <p className="text-lg md:text-xl mb-8 text-blue-100">
+          <p className="text-lg md:text-xl mb-10 text-blue-100">
             Nền tảng chia sẻ tài liệu học tập chất lượng cao dành riêng cho sinh viên ULIS
           </p>
 
@@ -49,6 +52,23 @@ export function LandingPage() {
               </Button>
             </div>
           </form>
+        </div>
+      </section>
+
+      {/* Intro Video Section */}
+      <section className="py-12 px-4 -mt-10 relative z-20">
+        <div className="container mx-auto max-w-4xl">
+          <div className="bg-white p-2 rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transform hover:scale-[1.01] transition-transform duration-500">
+            <div className="aspect-video rounded-xl overflow-hidden bg-gray-900 shadow-inner">
+              <iframe
+                src="https://drive.google.com/file/d/1c_sKPFb03EfeUSDm5LXM5HXQfH3qz4Hb/preview"
+                className="w-full h-full border-none"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title="Giới thiệu ShareHub"
+              ></iframe>
+            </div>
+          </div>
         </div>
       </section>
 
