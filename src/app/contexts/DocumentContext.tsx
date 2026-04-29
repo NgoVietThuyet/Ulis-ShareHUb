@@ -25,63 +25,75 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
 
-  // Load from Vercel Blob on startup
+  // Load from Vercel Postgres on startup
   useEffect(() => {
     async function loadData() {
       try {
-        const { list } = await import('@vercel/blob');
-        const { blobs } = await list({ token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN });
-        const dbBlob = blobs.find((b: any) => b.pathname === 'db.json');
+        const [docsRes, reviewsRes] = await Promise.all([
+          fetch('/api/documents'),
+          fetch('/api/reviews')
+        ]);
         
-        if (dbBlob) {
-          const res = await fetch(dbBlob.url + '?t=' + Date.now(), { cache: 'no-store' });
-          const data = await res.json();
-          if (data.documents && data.documents.length > 0) setDocuments(data.documents);
-          if (data.reviews) setReviews(data.reviews);
+        if (docsRes.ok) {
+          const docs = await docsRes.json();
+          if (docs.length > 0) setDocuments(docs);
+        }
+        
+        if (reviewsRes.ok) {
+          const revs = await reviewsRes.json();
+          if (revs.length > 0) setReviews(revs);
         }
       } catch (e) {
-        console.error("Failed to load db.json from Vercel", e);
+        console.error("Failed to load data from Postgres", e);
       }
     }
     loadData();
   }, []);
 
-  const saveDb = async (newDocs: Document[], newReviews: Review[]) => {
+  const addDocument = async (doc: Document) => {
+    // Optimistic update
+    setDocuments([doc, ...documents]);
+
     try {
-      const { put } = await import('@vercel/blob');
-      const dbContent = JSON.stringify({ documents: newDocs, reviews: newReviews });
-      const blob = new Blob([dbContent], { type: 'application/json' });
-      await put('db.json', blob, { 
-        access: 'public', 
-        addRandomSuffix: false,
-        token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN 
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(doc),
       });
+      
+      if (!res.ok) throw new Error('Failed to save document');
     } catch (e) {
-      console.error("Failed to save db.json to Vercel", e);
+      console.error("Failed to save document to Postgres", e);
+      // Revert optimistic update on failure if desired, but for now we just log
     }
   };
 
-  const addDocument = (doc: Document) => {
-    const newDocs = [doc, ...documents];
-    setDocuments(newDocs);
-    saveDb(newDocs, reviews);
-  };
-
-  const addReview = (review: Review) => {
+  const addReview = async (review: Review) => {
+    // Optimistic update for reviews
     const newReviews = [...reviews, review];
     setReviews(newReviews);
 
-    // Update document rating
+    // Optimistic update for document rating
     const docReviews = newReviews.filter(r => r.documentId === review.documentId);
     const avgRating = docReviews.reduce((sum, r) => sum + r.rating, 0) / docReviews.length;
 
-    const newDocs = documents.map(doc =>
+    setDocuments(prevDocs => prevDocs.map(doc =>
       doc.id === review.documentId
         ? { ...doc, rating: avgRating, reviewCount: docReviews.length }
         : doc
-    );
-    setDocuments(newDocs);
-    saveDb(newDocs, newReviews);
+    ));
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(review),
+      });
+      
+      if (!res.ok) throw new Error('Failed to save review');
+    } catch (e) {
+      console.error("Failed to save review to Postgres", e);
+    }
   };
 
   const searchDocuments = (query: string): Document[] => {
