@@ -11,7 +11,7 @@ export function LandingPage() {
   const { documents } = useDocuments();
   const navigate = useNavigate();
 
-  const featuredDocs = documents.filter(doc => doc.verified).slice(0, 6);
+  const featuredDocs = documents.slice(0, 6);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
