@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Document, mockDocuments, mockReviews, Review } from '../data/mockData';
 
 interface DocumentContextType {
   documents: Document[];
   reviews: Review[];
-  uploadedFiles: Map<string, File>;
-  addDocument: (doc: Document, file?: File) => void;
+  addDocument: (doc: Document) => void;
   addReview: (review: Review) => void;
   searchDocuments: (query: string) => Document[];
   filterDocuments: (filters: FilterOptions) => Document[];
@@ -25,27 +24,64 @@ const DocumentContext = createContext<DocumentContextType | undefined>(undefined
 export function DocumentProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [uploadedFiles] = useState<Map<string, File>>(new Map());
 
-  const addDocument = (doc: Document, file?: File) => {
-    setDocuments(prev => [doc, ...prev]);
-    if (file) {
-      uploadedFiles.set(doc.id, file);
+  // Load from Vercel Blob on startup
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { list } = await import('@vercel/blob');
+        const { blobs } = await list({ token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN });
+        const dbBlob = blobs.find((b: any) => b.pathname === 'db.json');
+        
+        if (dbBlob) {
+          const res = await fetch(dbBlob.url + '?t=' + Date.now(), { cache: 'no-store' });
+          const data = await res.json();
+          if (data.documents && data.documents.length > 0) setDocuments(data.documents);
+          if (data.reviews) setReviews(data.reviews);
+        }
+      } catch (e) {
+        console.error("Failed to load db.json from Vercel", e);
+      }
+    }
+    loadData();
+  }, []);
+
+  const saveDb = async (newDocs: Document[], newReviews: Review[]) => {
+    try {
+      const { put } = await import('@vercel/blob');
+      const dbContent = JSON.stringify({ documents: newDocs, reviews: newReviews });
+      const blob = new Blob([dbContent], { type: 'application/json' });
+      await put('db.json', blob, { 
+        access: 'public', 
+        addRandomSuffix: false,
+        token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN 
+      });
+    } catch (e) {
+      console.error("Failed to save db.json to Vercel", e);
     }
   };
 
+  const addDocument = (doc: Document) => {
+    const newDocs = [doc, ...documents];
+    setDocuments(newDocs);
+    saveDb(newDocs, reviews);
+  };
+
   const addReview = (review: Review) => {
-    setReviews(prev => [...prev, review]);
+    const newReviews = [...reviews, review];
+    setReviews(newReviews);
 
     // Update document rating
-    const docReviews = [...reviews, review].filter(r => r.documentId === review.documentId);
+    const docReviews = newReviews.filter(r => r.documentId === review.documentId);
     const avgRating = docReviews.reduce((sum, r) => sum + r.rating, 0) / docReviews.length;
 
-    setDocuments(prev => prev.map(doc =>
+    const newDocs = documents.map(doc =>
       doc.id === review.documentId
         ? { ...doc, rating: avgRating, reviewCount: docReviews.length }
         : doc
-    ));
+    );
+    setDocuments(newDocs);
+    saveDb(newDocs, newReviews);
   };
 
   const searchDocuments = (query: string): Document[] => {
@@ -81,7 +117,6 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     <DocumentContext.Provider value={{
       documents,
       reviews,
-      uploadedFiles,
       addDocument,
       addReview,
       searchDocuments,

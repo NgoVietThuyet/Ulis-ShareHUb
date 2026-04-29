@@ -20,17 +20,31 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">Thông tin liên hệ</h3>
             <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-blue-400" />
-                <span className="text-sm">sharehub@ulis.vnu.edu.vn</span>
+              <li className="flex items-start gap-3">
+                <MapPin className="h-4 w-4 text-blue-400 mt-1 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-400">Địa điểm thực hiện dự án:</p>
+                  <p>Trường ĐHNN - ĐHQG Hà Nội</p>
+                  <p className="mt-1">Số 2, Phạm Văn Đồng, Cầu Giấy, Hà Nội</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="bg-blue-400/10 p-1 rounded h-4 w-4 flex items-center justify-center shrink-0 mt-1">
+                  <span className="text-[10px] font-bold text-blue-400">G107</span>
+                </div>
+                <div className="text-sm">
+                  <p className="font-medium text-blue-400">Đơn vị thực hiện:</p>
+                  <p>Nhóm 107</p>
+                  <p className="text-xs text-gray-400">Người liên lạc: Đinh Phương Thu (Trưởng nhóm)</p>
+                </div>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-blue-400" />
-                <span className="text-sm">024 3754 2211</span>
+                <Mail className="h-4 w-4 text-blue-400 shrink-0" />
+                <a href="mailto:pngthu5775@gmail.com" className="text-sm hover:text-blue-400 transition-colors">pngthu5775@gmail.com</a>
               </li>
               <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-blue-400" />
-                <span className="text-sm">Đường Phạm Văn Đồng, Cầu Giấy, Hà Nội</span>
+                <Phone className="h-4 w-4 text-blue-400 shrink-0" />
+                <a href="tel:0842181368" className="text-sm hover:text-blue-400 transition-colors">0842181368</a>
               </li>
             </ul>
           </div>

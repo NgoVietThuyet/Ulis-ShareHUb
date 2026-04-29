@@ -14,6 +14,7 @@ import { useDocuments } from '../contexts/DocumentContext';
 import { categories, subjects, teachers } from '../data/mockData';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { put } from '@vercel/blob';
 
 const uploadSchema = z.object({
   title: z.string().min(5, 'Tên tài liệu phải có ít nhất 5 ký tự'),
@@ -84,18 +85,22 @@ export function UploadPage() {
     setUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    try {
+      let fileUrl = uploadType === 'link' ? data.link : undefined;
+      
+      if (uploadType === 'file' && selectedFile) {
+        // Upload to Vercel Blob
+        const blob = await put(selectedFile.name, selectedFile, {
+          access: 'public',
+          token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN,
+          onUploadProgress: (progressEvent) => {
+            setUploadProgress(Math.round((progressEvent.loaded / progressEvent.total) * 100));
+          }
+        });
+        
+        fileUrl = blob.url;
+      }
 
-    setTimeout(() => {
       const newDoc = {
         id: `doc${Date.now()}`,
         title: data.title,
@@ -105,7 +110,7 @@ export function UploadPage() {
         category: data.category,
         description: data.description,
         fileType: uploadType === 'file' ? (selectedFile?.type.includes('pdf') ? 'pdf' : 'word') : 'link',
-        fileUrl: uploadType === 'link' ? data.link : undefined,
+        fileUrl,
         uploadDate: new Date().toISOString().split('T')[0],
         rating: 0,
         reviewCount: 0,
@@ -113,16 +118,20 @@ export function UploadPage() {
         downloads: 0
       };
 
-      addDocument(newDoc as any, selectedFile || undefined);
+      addDocument(newDoc as any);
 
       toast.success('Tài liệu đã được tải lên thành công! Đang chờ Admin kiểm định.');
-      setUploading(false);
-      setUploadProgress(0);
-
       setTimeout(() => {
         navigate('/browse');
       }, 1500);
-    }, 2000);
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error('Có lỗi xảy ra khi tải lên tài liệu. Vui lòng thử lại.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -175,8 +184,11 @@ export function UploadPage() {
               {uploadType === 'file' ? (
                 <div>
                   <Label htmlFor="file-upload">Chọn file (PDF hoặc Word)</Label>
-                  <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-                    <Upload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <Label 
+                    htmlFor="file-upload" 
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                  >
+                    <Upload className="h-12 w-12 text-gray-400 mb-3" />
                     <Input
                       id="file-upload"
                       type="file"
@@ -184,22 +196,20 @@ export function UploadPage() {
                       onChange={handleFileChange}
                       className="hidden"
                     />
-                    <Label htmlFor="file-upload" className="cursor-pointer">
-                      {selectedFile ? (
-                        <div>
-                          <p className="font-medium text-blue-600">{selectedFile.name}</p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="font-medium">Nhấn để chọn file</p>
-                          <p className="text-sm text-gray-500 mt-1">PDF hoặc Word, tối đa 50MB</p>
-                        </div>
-                      )}
-                    </Label>
-                  </div>
+                    {selectedFile ? (
+                      <div className="text-center">
+                        <p className="font-medium text-blue-600">{selectedFile.name}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <p className="font-medium">Nhấn để chọn file</p>
+                        <p className="text-sm text-gray-500 mt-1">PDF hoặc Word, tối đa 50MB</p>
+                      </div>
+                    )}
+                  </Label>
                 </div>
               ) : (
                 <div>
@@ -236,15 +246,20 @@ export function UploadPage() {
                 <Label className="mb-3 block">Khối *</Label>
                 <RadioGroup
                   onValueChange={(value) => setValue('category', value as any)}
-                  className="grid grid-cols-3 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                  value={selectedCategory}
                 >
                   {categories.map((cat) => (
-                    <div key={cat.id} className="flex items-center space-x-2">
+                    <Label
+                      key={cat.id}
+                      htmlFor={`cat-${cat.id}`}
+                      className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedCategory === cat.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
                       <RadioGroupItem value={cat.id} id={`cat-${cat.id}`} />
-                      <Label htmlFor={`cat-${cat.id}`} className="cursor-pointer font-normal text-sm">
-                        {cat.name}
-                      </Label>
-                    </div>
+                      <span className="font-normal text-sm">{cat.name}</span>
+                    </Label>
                   ))}
                 </RadioGroup>
                 {errors.category && (

@@ -242,10 +242,19 @@ export function DocumentDetailPage() {
                   </div>
                 </div>
 
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-6">
-                  <Download className="h-4 w-4 mr-2" />
-                  Tải xuống
-                </Button>
+                {document.fileUrl ? (
+                  <a href={document.fileUrl} target="_blank" rel="noopener noreferrer" className="block w-full mt-6" download>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Download className="h-4 w-4 mr-2" />
+                      {document.fileType === 'link' ? 'Mở liên kết' : 'Tải xuống'}
+                    </Button>
+                  </a>
+                ) : (
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-6" disabled>
+                    <Download className="h-4 w-4 mr-2" />
+                    Không có file đính kèm
+                  </Button>
+                )}
 
                 <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">
                   <Flag className="h-4 w-4 mr-2" />
