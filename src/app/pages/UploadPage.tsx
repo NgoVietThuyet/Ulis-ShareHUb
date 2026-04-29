@@ -14,7 +14,7 @@ import { useDocuments } from '../contexts/DocumentContext';
 import { categories, subjects, teachers } from '../data/mockData';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { put } from '@vercel/blob';
+import { upload } from '@vercel/blob/client';
 
 const uploadSchema = z.object({
   title: z.string().min(5, 'Tên tài liệu phải có ít nhất 5 ký tự'),
@@ -89,10 +89,10 @@ export function UploadPage() {
       let fileUrl = uploadType === 'link' ? data.link : undefined;
       
       if (uploadType === 'file' && selectedFile) {
-        // Upload to Vercel Blob
-        const blob = await put(selectedFile.name, selectedFile, {
+        // Upload to Vercel Blob via secure client-side upload
+        const blob = await upload(selectedFile.name, selectedFile, {
           access: 'public',
-          token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN,
+          handleUploadUrl: '/api/upload',
           onUploadProgress: (progressEvent) => {
             setUploadProgress(Math.round((progressEvent.loaded / progressEvent.total) * 100));
           }
