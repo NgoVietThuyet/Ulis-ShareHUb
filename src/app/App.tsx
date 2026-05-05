@@ -7,6 +7,7 @@ import { LandingPage } from './pages/LandingPage';
 import { BrowsePage } from './pages/BrowsePage';
 import { DocumentDetailPage } from './pages/DocumentDetailPage';
 import { UploadPage } from './pages/UploadPage';
+import { FeedbackPage } from './pages/FeedbackPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
               <Route path="/browse" element={<BrowsePage />} />
               <Route path="/document/:id" element={<DocumentDetailPage />} />
               <Route path="/upload" element={<UploadPage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
             </Routes>
           </main>
           <Footer />

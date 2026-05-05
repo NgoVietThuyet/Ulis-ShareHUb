@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Search, BookOpen, Shield, Zap, TrendingUp } from 'lucide-react';
+import { Search, BookOpen, Shield, Zap, TrendingUp, Star, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { DocumentCard } from '../components/DocumentCard';
 import { useDocuments } from '../contexts/DocumentContext';
 import { useNavigate } from 'react-router-dom';
+import { mockPlatformFeedbacks } from '../data/mockData';
 
 export function LandingPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,6 +13,7 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   const featuredDocs = documents.slice(0, 6);
+  const featuredFeedbacks = mockPlatformFeedbacks.slice(0, 3);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +132,50 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredDocs.map((doc) => (
               <DocumentCard key={doc.id} document={doc} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Feedback Section */}
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Sinh viên nói gì về ShareHub?</h2>
+              <p className="text-gray-600">Những chia sẻ thật lòng từ những người bạn đồng hành</p>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/feedback')}>
+              Xem tất cả phản hồi
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredFeedbacks.map((feedback) => (
+              <div key={feedback.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-blue-100 h-10 w-10 rounded-full flex items-center justify-center text-blue-600">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">{feedback.userName}</h4>
+                    <p className="text-xs text-gray-500">{feedback.department}</p>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-3 w-3 ${
+                        i < feedback.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-600 text-sm italic flex-1">
+                  "{feedback.comment.length > 120 ? feedback.comment.substring(0, 120) + '...' : feedback.comment}"
+                </p>
+              </div>
             ))}
           </div>
         </div>

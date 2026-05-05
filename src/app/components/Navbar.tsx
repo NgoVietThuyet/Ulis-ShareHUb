@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Upload, BookOpen } from 'lucide-react';
+import { Search, Upload, BookOpen, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 
 export function Navbar() {
@@ -27,6 +27,16 @@ export function Navbar() {
           >
             <Search className="h-4 w-4" />
             Tìm kiếm
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/feedback')}
+            className="hidden sm:flex items-center gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Phản hồi
           </Button>
 
           <Button
