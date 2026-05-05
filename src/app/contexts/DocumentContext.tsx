@@ -32,10 +32,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function loadData() {
       try {
-        const [docsRes, reviewsRes, feedbackRes] = await Promise.all([
+        const [docsRes, reviewsRes] = await Promise.all([
           fetch('/api/documents'),
-          fetch('/api/reviews'),
-          fetch('/api/feedback')
+          fetch('/api/reviews')
         ]);
         
         if (docsRes.ok) {
@@ -48,9 +47,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           setReviews(revs);
         }
 
-        if (feedbackRes.ok) {
-          const feedback = await feedbackRes.json();
-          setPlatformFeedbacks(feedback);
+        // Load feedbacks from localStorage
+        const savedFeedbacks = localStorage.getItem('ulis_sharehub_feedbacks');
+        if (savedFeedbacks) {
+          const localFeedbacks = JSON.parse(savedFeedbacks);
+          setPlatformFeedbacks([...localFeedbacks, ...mockPlatformFeedbacks]);
         }
       } catch (e) {
         console.error("Failed to load data from Postgres", e);
@@ -104,21 +105,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addPlatformFeedback = async (feedback: PlatformFeedback) => {
-    // Optimistic update
-    setPlatformFeedbacks([feedback, ...platformFeedbacks]);
+  const addPlatformFeedback = (feedback: PlatformFeedback) => {
+    const newFeedbacks = [feedback, ...platformFeedbacks];
+    setPlatformFeedbacks(newFeedbacks);
 
-    try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(feedback),
-      });
-      
-      if (!res.ok) throw new Error('Failed to save feedback');
-    } catch (e) {
-      console.error("Failed to save feedback to Postgres", e);
-    }
+    // Save to localStorage (only the new ones, excluding mock data to avoid duplication)
+    const savedFeedbacks = localStorage.getItem('ulis_sharehub_feedbacks');
+    const localFeedbacks = savedFeedbacks ? JSON.parse(savedFeedbacks) : [];
+    const updatedLocalFeedbacks = [feedback, ...localFeedbacks];
+    localStorage.setItem('ulis_sharehub_feedbacks', JSON.stringify(updatedLocalFeedbacks));
   };
 
   const searchDocuments = (query: string): Document[] => {
