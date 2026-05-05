@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Document, mockDocuments, mockReviews, Review } from '../data/mockData';
+import { Document, mockDocuments, mockReviews, Review, PlatformFeedback, mockPlatformFeedbacks } from '../data/mockData';
 
 interface DocumentContextType {
   documents: Document[];
   reviews: Review[];
+  platformFeedbacks: PlatformFeedback[];
   addDocument: (doc: Document) => void;
   addReview: (review: Review) => void;
+  addPlatformFeedback: (feedback: PlatformFeedback) => void;
   searchDocuments: (query: string) => Document[];
   filterDocuments: (filters: FilterOptions) => Document[];
   getDocumentById: (id: string) => Document | undefined;
@@ -24,14 +26,16 @@ const DocumentContext = createContext<DocumentContextType | undefined>(undefined
 export function DocumentProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
+  const [platformFeedbacks, setPlatformFeedbacks] = useState<PlatformFeedback[]>(mockPlatformFeedbacks);
 
   // Load from Vercel Postgres on startup
   useEffect(() => {
     async function loadData() {
       try {
-        const [docsRes, reviewsRes] = await Promise.all([
+        const [docsRes, reviewsRes, feedbackRes] = await Promise.all([
           fetch('/api/documents'),
-          fetch('/api/reviews')
+          fetch('/api/reviews'),
+          fetch('/api/feedback')
         ]);
         
         if (docsRes.ok) {
@@ -42,6 +46,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         if (reviewsRes.ok) {
           const revs = await reviewsRes.json();
           if (revs.length > 0) setReviews(revs);
+        }
+
+        if (feedbackRes.ok) {
+          const feedback = await feedbackRes.json();
+          if (feedback.length > 0) setPlatformFeedbacks(feedback);
         }
       } catch (e) {
         console.error("Failed to load data from Postgres", e);
@@ -64,7 +73,6 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error('Failed to save document');
     } catch (e) {
       console.error("Failed to save document to Postgres", e);
-      // Revert optimistic update on failure if desired, but for now we just log
     }
   };
 
@@ -93,6 +101,23 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error('Failed to save review');
     } catch (e) {
       console.error("Failed to save review to Postgres", e);
+    }
+  };
+
+  const addPlatformFeedback = async (feedback: PlatformFeedback) => {
+    // Optimistic update
+    setPlatformFeedbacks([feedback, ...platformFeedbacks]);
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feedback),
+      });
+      
+      if (!res.ok) throw new Error('Failed to save feedback');
+    } catch (e) {
+      console.error("Failed to save feedback to Postgres", e);
     }
   };
 
@@ -129,8 +154,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     <DocumentContext.Provider value={{
       documents,
       reviews,
+      platformFeedbacks,
       addDocument,
       addReview,
+      addPlatformFeedback,
       searchDocuments,
       filterDocuments,
       getDocumentById,

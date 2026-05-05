@@ -41,6 +41,18 @@ export default async function handler(
       );
     `;
 
+    // Create Platform Feedback table
+    await client.sql`
+      CREATE TABLE IF NOT EXISTS platform_feedback (
+        id TEXT PRIMARY KEY,
+        user_name TEXT NOT NULL,
+        department TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        date TEXT NOT NULL
+      );
+    `;
+
     return response.status(200).json({ message: 'Database initialized successfully' });
   } catch (error) {
     console.error('Error initializing database:', error);

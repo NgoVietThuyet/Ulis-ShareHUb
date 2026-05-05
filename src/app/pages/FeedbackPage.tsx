@@ -3,11 +3,12 @@ import { Star, Send, User, MessageSquare, Quote } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { mockPlatformFeedbacks, PlatformFeedback } from '../data/mockData';
+import { PlatformFeedback } from '../data/mockData';
 import { toast } from 'sonner';
+import { useDocuments } from '../contexts/DocumentContext';
 
 export function FeedbackPage() {
-  const [feedbacks, setFeedbacks] = useState<PlatformFeedback[]>(mockPlatformFeedbacks);
+  const { platformFeedbacks, addPlatformFeedback } = useDocuments();
   const [name, setName] = useState('');
   const [department, setDepartment] = useState('');
   const [comment, setComment] = useState('');
@@ -30,7 +31,7 @@ export function FeedbackPage() {
       date: new Date().toISOString().split('T')[0]
     };
 
-    setFeedbacks([newFeedback, ...feedbacks]);
+    addPlatformFeedback(newFeedback);
     setName('');
     setDepartment('');
     setComment('');
@@ -122,7 +123,7 @@ export function FeedbackPage() {
           {/* Feedback List */}
           <div className="lg:col-span-2">
             <div className="space-y-6">
-              {feedbacks.map((feedback) => (
+              {platformFeedbacks.map((feedback) => (
                 <div 
                   key={feedback.id} 
                   className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-200 transition-all group"

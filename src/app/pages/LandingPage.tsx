@@ -9,11 +9,11 @@ import { mockPlatformFeedbacks } from '../data/mockData';
 
 export function LandingPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { documents } = useDocuments();
+  const { documents, platformFeedbacks } = useDocuments();
   const navigate = useNavigate();
 
   const featuredDocs = documents.slice(0, 6);
-  const featuredFeedbacks = mockPlatformFeedbacks.slice(0, 3);
+  const featuredFeedbacks = platformFeedbacks.slice(0, 3);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
