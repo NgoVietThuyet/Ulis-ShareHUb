@@ -40,17 +40,17 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         
         if (docsRes.ok) {
           const docs = await docsRes.json();
-          if (docs.length > 0) setDocuments(docs);
+          setDocuments(docs);
         }
         
         if (reviewsRes.ok) {
           const revs = await reviewsRes.json();
-          if (revs.length > 0) setReviews(revs);
+          setReviews(revs);
         }
 
         if (feedbackRes.ok) {
           const feedback = await feedbackRes.json();
-          if (feedback.length > 0) setPlatformFeedbacks(feedback);
+          setPlatformFeedbacks(feedback);
         }
       } catch (e) {
         console.error("Failed to load data from Postgres", e);
